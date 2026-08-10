@@ -1,0 +1,63 @@
+# Python cache and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# VS Code local configuration
+.vscode/
+
+# Local Python environments
+.venv/
+venv/
+env/
+conda-env/
+
+# ArcGIS-generated metadata and temporary files
+*.pyt.xml
+*.lock
+*.sr.lock
+*.tmp
+*.bak
+
+# Local GIS connections
+*.sde
+
+# Data and generated outputs
+data/
+outputs/
+scratch/
+temp/
+logs/
+
+# File geodatabases
+*.gdb/
+
+# Shapefiles
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.sbn
+*.sbx
+
+# Raster data
+*.tif
+*.tiff
+*.img
+
+# Tabular exports
+*.csv
+*.xlsx
+
+# Compressed data
+*.zip
+*.7z
+*.rar
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
