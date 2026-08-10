@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import platform
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -23,7 +24,16 @@ EXCLUDED_DIRECTORIES = {
     "logs",
 }
 
-INCLUDED_NAMES = {".gitignore"}
+EXCLUDED_NAMES = {
+    ".env",
+    "project_report.md",
+}
+
+INCLUDED_NAMES = {
+    ".gitignore",
+    "LICENSE",
+    "LICENSE.md",
+}
 
 INCLUDED_SUFFIXES = {
     ".py",
@@ -43,7 +53,10 @@ def is_excluded(path: Path) -> bool:
     if any(part in EXCLUDED_DIRECTORIES for part in relative_path.parts):
         return True
 
-    if path.name == OUTPUT_FILE.name:
+    if path.name in EXCLUDED_NAMES:
+        return True
+
+    if path.name.startswith(".env.") and path.name != ".env.example":
         return True
 
     if path.name.endswith(".pyt.xml"):
@@ -65,13 +78,28 @@ def get_project_paths() -> list[Path]:
 
 def build_tree(paths: list[Path]) -> str:
     lines = [f"{PROJECT_ROOT.name}/"]
+    children_by_parent: dict[Path, list[Path]] = {}
 
     for path in paths:
-        relative_path = path.relative_to(PROJECT_ROOT)
-        indentation = "    " * (len(relative_path.parts) - 1)
-        ending = "/" if path.is_dir() else ""
-        lines.append(f"{indentation}├── {path.name}{ending}")
+        children_by_parent.setdefault(path.parent, []).append(path)
 
+    def add_children(parent: Path, prefix: str) -> None:
+        children = sorted(
+            children_by_parent.get(parent, []),
+            key=lambda path: (not path.is_dir(), path.name.lower()),
+        )
+
+        for index, child in enumerate(children):
+            is_last = index == len(children) - 1
+            connector = "└──" if is_last else "├──"
+            suffix = "/" if child.is_dir() else ""
+            lines.append(f"{prefix}{connector} {child.name}{suffix}")
+
+            if child.is_dir():
+                child_prefix = prefix + ("    " if is_last else "│   ")
+                add_children(child, child_prefix)
+
+    add_children(PROJECT_ROOT, "")
     return "\n".join(lines)
 
 
@@ -90,6 +118,12 @@ def read_text(path: Path) -> str:
         return path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
         return path.read_text(encoding="latin-1")
+
+
+def get_code_fence(content: str) -> str:
+    backtick_runs = re.findall(r"`+", content)
+    longest_run = max((len(run) for run in backtick_runs), default=0)
+    return "`" * max(3, longest_run + 1)
 
 
 def run_git(command: list[str]) -> str:
@@ -136,7 +170,7 @@ def build_report() -> str:
     paths = get_project_paths()
 
     report = [
-        "# ArcGIS Tools LabSIS — Project Report",
+        "# LabSIS ArcGIS Tools — Project Report",
         "",
         "## Environment",
         "",
@@ -163,14 +197,16 @@ def build_report() -> str:
             continue
 
         relative_path = path.relative_to(PROJECT_ROOT).as_posix()
+        content = read_text(path).rstrip()
+        fence = get_code_fence(content)
 
         report.extend(
             [
                 f"### `{relative_path}`",
                 "",
-                f"```{get_language(path)}",
-                read_text(path).rstrip(),
-                "```",
+                f"{fence}{get_language(path)}",
+                content,
+                fence,
                 "",
             ]
         )

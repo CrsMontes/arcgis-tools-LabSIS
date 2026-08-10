@@ -292,7 +292,7 @@ class GenerateValidationSample:
             direction="Input"
         )
 
-        minimum_distance.value = "0 Meters"
+        minimum_distance.value = "100 Meters"
 
         minimum_distance.category = "Advanced Spatial Parameters"
 

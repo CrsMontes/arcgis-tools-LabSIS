@@ -14,6 +14,11 @@ venv/
 env/
 conda-env/
 
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+
 # ArcGIS-generated metadata and temporary files
 *.pyt.xml
 *.lock
